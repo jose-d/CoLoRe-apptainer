@@ -1,0 +1,99 @@
+BootStrap: docker
+From: rockylinux:8
+
+%help
+
+contains colore app
+
+%labels
+    Author Josef Dvoracek
+    Version v20221104_1
+
+%environment
+
+  export LD_LIBRARY_PATH=/usr/local/Healpix_3.82/lib:/usr/local/lib:${LD_LIBRARY_PATH}
+  export PATH=/usr/local/Healpix_3.82/bin:${PATH}
+
+%files
+  CoLoRe /apptainer_installdir/CoLoRe
+
+%post
+
+  #dnf -y groupinstall base
+  dnf -y groupinstall 'Development tools' --exclude=php
+  dnf -y install python3 python3-numpy
+  dnf -y install gcc-gfortran
+
+  dnf -y install epel-release
+  dnf -y config-manager --set-enabled powertools
+  dnf -y install python3-Cython python36-devel libconfig-devel
+
+  dnf -y install wget curl vim
+  dnf -y install hdf5 hdf5-devel
+
+  # OPENMPI install
+  mkdir -p /apptainer_installdir
+  cd /apptainer_installdir
+  wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.4.tar.gz
+  tar -xvf ./openmpi-4.1.4.tar.gz
+  cd openmpi-4.1.4
+  #git clone --recursive https://github.com/open-mpi/ompi.git
+  #cd ompi
+  #./autogen.pl
+  ./configure --prefix=/usr/local
+  make -j 64
+  make install
+
+  /usr/local/bin/mpicc examples/ring_c.c -o /usr/bin/mpi_ring
+
+  # FFTW install
+  cd /apptainer_installdir
+  wget https://fzu.cz/~jose/install/other/fftw-3.3.10.tar.gz
+  tar -xvf ./fftw-3.3.10.tar.gz
+  cd fftw-3.3.10
+  #./configure --enable-mpi
+  ./configure --enable-float --enable-mpi --enable-openmp
+  make -j 64
+  make install
+
+  make clean
+  ./configure --enable-mpi
+  make -j 64
+  make install
+
+  #CFITSIO install
+  #TODO: update to http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.2.0.tar.gz
+  cd /apptainer_installdir
+  wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.1.0.tar.gz
+  tar -xvf ./cfitsio-4.1.0.tar.gz
+  cd cfitsio-4.1.0
+  ./configure --prefix=/usr/local
+  make -j 12
+  make install
+
+  #HEALPIX install
+  cd /apptainer_installdir
+  wget https://fzu.cz/~jose/install/other/Healpix_3.82_2022Jul28.tar.gz
+  tar -xvf ./Healpix_3.82_2022Jul28.tar.gz --directory /usr/local/
+  cd /usr/local/Healpix_3.82/
+  # -all is not working because most likely python procedure needs something we do not have :)
+  #./configure --auto=all
+  ./configure --auto=c,cxx,f90,sharp -L
+  make
+
+  #GSL install
+  cd /apptainer_installdir
+  wget https://mirrors.kernel.org/gnu/gsl/gsl-2.7.1.tar.gz
+  tar -xvf gsl-2.7.1.tar.gz
+  cd gsl-2.7.1
+  ./configure
+  make -j 64
+  make install
+
+  #Finally, install Colore
+  cd /apptainer_installdir/CoLoRe
+  make
+  mkdir -p /usr/local/bin
+  cp CoLoRe /usr/local/bin/CoLoRe 
+
+  rm -rf /apptainer_installdir
