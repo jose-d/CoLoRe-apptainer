@@ -4,6 +4,8 @@ Part of this project is [apptainer](https://apptainer.org/) recipe file formaliz
 
 ## Build
 
+(possibly modify `CoLoRe_Makefile` to your liking ) and then build sif container:
+
 ```
 sudo apptainer build --force ./CoLoRe.sif ./container.def &> buildout.log
 ```
@@ -12,11 +14,13 @@ Tested with apptainer 1.0.3-1 on Rocky Linux 8.
 
 ## Run
 
+CoLoRe is installed into `/usr/local/bin/CoLoRe` inside of container, so it can be started so easy:
+
 ```
 mpirun -np 4 CoLoRe.sif CoLoRe examples/param.cfg
 ```
 
-contains openmpi 4.1.4 so it's reasonable to use _similar_ version of openMPI outside of container.
+contains openmpi 4.1.4 so it's reasonable to use _similar_ version of openMPI outside of container to ensure [hybrid MPI](https://apptainer.org/docs/user/main/mpi.html) model will work properly.
 
 other ingredients:
 - cfitsio 4.2.0 
