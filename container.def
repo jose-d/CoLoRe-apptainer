@@ -34,6 +34,7 @@ contains colore app
 
   # healpix version vars: (we get it from my mirror, as sourceforge tends to be slow :/ )
   export url_healpix="https://fzu.cz/~jose/install/other/Healpix_3.82_2022Jul28.tar.gz"
+  export version_string_healpix="Healpix_3.82"
 
   # GSL version vars:
   export url_gsl="http://fzu.cz/~jose/install/other/gsl-2.7.1.tar.gz"
@@ -96,15 +97,16 @@ contains colore app
   #HEALPIX install
   cd /apptainer_installdir
   wget ${url_healpix}
+  # nonstandard naming:
   tar -xvf ./Healpix_3.82_2022Jul28.tar.gz --directory /usr/local/
-  cd /usr/local/Healpix_3.82/
-  # -all is not working because most likely python procedure needs something we do not have :)
+  cd /usr/local/${version_string_healpix}/
+  # all is not working because most likely python procedure needs something we do not have :)
   #./configure --auto=all
   ./configure --auto=c,cxx,f90,sharp -L
   make
   # here are nonstandard dirs so..:
-  export LD_LIBRARY_PATH=/usr/local/Healpix_3.82/lib:${LD_LIBRARY_PATH}
-  export CPATH=/usr/local/Healpix_3.82/include:/usr/local/Healpix_3.82/include/libsharp:${CPATH}
+  export LD_LIBRARY_PATH=/usr/local/${version_string_healpix}/lib:${LD_LIBRARY_PATH}
+  export CPATH=/usr/local/${version_string_healpix}/include:/usr/local/${version_string_healpix}/include/libsharp:${CPATH}
 
   #GSL install
   cd /apptainer_installdir
