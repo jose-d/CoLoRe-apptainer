@@ -26,7 +26,7 @@ mpirun -np 4 CoLoRe.sif CoLoRe examples/param.cfg
 
 contains openmpi 4.1.4 so it's reasonable to use _similar_ version of openMPI outside of container to ensure [hybrid MPI](https://apptainer.org/docs/user/main/mpi.html) model will work properly.
 
-other ingredients:
+other significant ingredients:
 - cfitsio 4.2.0 
 - Healpix 3.82
 - gsl 2.7.1
