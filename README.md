@@ -5,13 +5,15 @@ Part of this project is [apptainer](https://apptainer.org/) recipe file formaliz
 ## Build
 
 ```
-sudo apptainer build --force ./image.sif ./container.def &> buildout.log
+sudo apptainer build --force ./CoLoRe.sif ./container.def &> buildout.log
 ```
+
+Tested with apptainer 1.0.3-1 on Rocky Linux 8.
 
 ## Run
 
 ```
-mpirun -np 4 CoLoRe_b2022-11-21.sif CoLoRe examples/param.cfg
+mpirun -np 4 CoLoRe.sif CoLoRe examples/param.cfg
 ```
 
 contains openmpi 4.1.4 so it's reasonable to use _similar_ version of openMPI outside of container.
