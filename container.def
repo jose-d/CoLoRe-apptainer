@@ -1,5 +1,7 @@
-BootStrap: docker
-From: rockylinux:8
+Bootstrap: yum
+OSVersion: 8
+MirrorURL: https://ftp.sh.cvut.cz/rocky/8/BaseOS/x86_64/os/
+Include: yum
 
 %help
 
@@ -7,17 +9,33 @@ contains colore app
 
 %labels
     Author Josef Dvoracek
-    Version v20221104_1
+    Version v2022-11-22_1
 
 %environment
 
   export LD_LIBRARY_PATH=/usr/local/Healpix_3.82/lib:/usr/local/lib:${LD_LIBRARY_PATH}
   export PATH=/usr/local/Healpix_3.82/bin:${PATH}
+  export CPATH=/usr/local/Healpix_3.82/include:/usr/local/Healpix_3.82/include/libsharp:${CPATH}
+
+  export UCX_POSIX_USE_PROC_LINK=n
 
 %files
-  CoLoRe /apptainer_installdir/CoLoRe
+  CoLoRe_Makefile /apptainer_installdir/CoLoRe_Makefile
 
 %post
+
+  # openmpi version vars:
+  export url_ompi="https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.4.tar.gz"
+  export version_string_ompi="openmpi-4.1.4"
+
+  # cfitsio version vars:
+  #export url_cfitsio="http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.1.0.tar.gz"
+  export url_cfitsio="http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.2.0.tar.gz"
+  export version_string_cfitsio="cfitsio-4.2.0"
+
+  # healpix version vars: (we get it from my mirror, as sourceforge tends to be slow :/ )
+  export url_healpix="https://fzu.cz/~jose/install/other/Healpix_3.82_2022Jul28.tar.gz"
+
 
   #dnf -y groupinstall base
   dnf -y groupinstall 'Development tools' --exclude=php
@@ -34,13 +52,14 @@ contains colore app
   # OPENMPI install
   mkdir -p /apptainer_installdir
   cd /apptainer_installdir
-  wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.4.tar.gz
-  tar -xvf ./openmpi-4.1.4.tar.gz
-  cd openmpi-4.1.4
+  wget ${url_ompi}
+  tar -xvf ./${version_string_ompi}.tar.gz
+  cd ${version_string_ompi}
+  # if we would go with git clone, autogen is needed:
   #git clone --recursive https://github.com/open-mpi/ompi.git
   #cd ompi
   #./autogen.pl
-  ./configure --prefix=/usr/local
+  ./configure --prefix=/usr/local --without-ofi --without-verbs
   make -j 64
   make install
 
@@ -51,35 +70,39 @@ contains colore app
   wget https://fzu.cz/~jose/install/other/fftw-3.3.10.tar.gz
   tar -xvf ./fftw-3.3.10.tar.gz
   cd fftw-3.3.10
-  #./configure --enable-mpi
+
+  # FFTW -float
   ./configure --enable-float --enable-mpi --enable-openmp
   make -j 64
   make install
 
+  # FFTW - default
   make clean
   ./configure --enable-mpi
   make -j 64
   make install
 
   #CFITSIO install
-  #TODO: update to http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.2.0.tar.gz
   cd /apptainer_installdir
-  wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.1.0.tar.gz
-  tar -xvf ./cfitsio-4.1.0.tar.gz
-  cd cfitsio-4.1.0
+  wget ${url_cfitsio}
+  tar -xvf ./${version_string_cfitsio}.tar.gz
+  cd ${version_string_cfitsio}
   ./configure --prefix=/usr/local
-  make -j 12
+  make -j 64
   make install
 
   #HEALPIX install
   cd /apptainer_installdir
-  wget https://fzu.cz/~jose/install/other/Healpix_3.82_2022Jul28.tar.gz
+  wget ${url_healpix}
   tar -xvf ./Healpix_3.82_2022Jul28.tar.gz --directory /usr/local/
   cd /usr/local/Healpix_3.82/
   # -all is not working because most likely python procedure needs something we do not have :)
   #./configure --auto=all
   ./configure --auto=c,cxx,f90,sharp -L
   make
+  # here are nonstandard dirs so..:
+  export LD_LIBRARY_PATH=/usr/local/Healpix_3.82/lib:${LD_LIBRARY_PATH}
+  export CPATH=/usr/local/Healpix_3.82/include:/usr/local/Healpix_3.82/include/libsharp:${CPATH}
 
   #GSL install
   cd /apptainer_installdir
@@ -91,7 +114,10 @@ contains colore app
   make install
 
   #Finally, install Colore
-  cd /apptainer_installdir/CoLoRe
+  cd /apptainer_installdir
+  git clone --recursive https://github.com/damonge/CoLoRe.git
+  cd CoLoRe
+  cp /apptainer_installdir/CoLoRe_Makefile Makefile
   make
   mkdir -p /usr/local/bin
   cp CoLoRe /usr/local/bin/CoLoRe 
