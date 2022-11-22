@@ -4,7 +4,11 @@ Part of this project is [apptainer](https://apptainer.org/) recipe file formaliz
 
 ## Build
 
-(possibly modify `CoLoRe_Makefile` to your liking ) and then build sif container:
+1) git clone this repo;
+
+2) (possibly modify `CoLoRe_Makefile` to your liking )
+
+3) build:
 
 ```
 sudo apptainer build --force ./CoLoRe.sif ./container.def &> buildout.log
